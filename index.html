@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>MedidorApp · Control de consumo</title>
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+
+<!-- FontAwesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<!-- Cropper.js -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- HEADER -->
+  <header class="app-header">
+    <div class="brand">
+      <span class="brand-mark"><i class="fa-solid fa-bolt"></i></span>
+      <div class="brand-text">
+        <strong>MedidorApp</strong>
+        <small>Control de consumo</small>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="btnDemo" title="Cargar datos de demostración">
+        <i class="fa-solid fa-flask"></i>
+      </button>
+      <button class="icon-btn" id="btnExport" title="Exportar datos">
+        <i class="fa-solid fa-file-export"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN VIEWS -->
+  <main class="app-main">
+
+    <!-- ============ REGISTRO ============ -->
+    <section class="view active" id="view-registro">
+
+      <div class="mode-switch" role="tablist">
+        <button class="mode-btn active" data-mode="manual" role="tab">
+          <i class="fa-solid fa-keyboard"></i> Manual
+        </button>
+        <button class="mode-btn" data-mode="ocr" role="tab">
+          <i class="fa-solid fa-camera"></i> Escanear
+        </button>
+      </div>
+
+      <!-- Manual form -->
+      <form id="formManual" class="glass-card form-card" autocomplete="off">
+
+        <div class="field">
+          <label for="meterType">Tipo de medidor</label>
+          <div class="select-wrap">
+            <select id="meterType" required>
+              <option value="luz" data-unit="kWh" data-icon="fa-bolt">⚡ Luz</option>
+              <option value="agua" data-unit="m³" data-icon="fa-droplet">💧 Agua</option>
+              <option value="gas" data-unit="m³" data-icon="fa-fire">🔥 Gas</option>
+              <option value="otro" data-unit="u." data-icon="fa-gauge">📟 Otro</option>
+            </select>
+            <i class="fa-solid fa-chevron-down select-caret"></i>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="readingValue">Valor de la lectura</label>
+          <div class="reading-input-wrap">
+            <input type="number" id="readingValue" inputmode="decimal" step="0.01" placeholder="0.00" required>
+            <input type="text" id="readingUnit" class="unit-input" value="kWh" maxlength="6" aria-label="Unidad de medida">
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="readingDate">Fecha</label>
+            <input type="date" id="readingDate" required>
+          </div>
+          <div class="field">
+            <label for="readingTime">Hora</label>
+            <input type="time" id="readingTime" required>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="readingNotes">Notas <span class="optional">(opcional)</span></label>
+          <input type="text" id="readingNotes" placeholder="Ej. Después de la revisión técnica" maxlength="120">
+        </div>
+
+        <button type="submit" class="btn-primary">
+          <i class="fa-solid fa-floppy-disk"></i> Guardar registro
+        </button>
+      </form>
+
+      <!-- OCR panel -->
+      <div id="ocrPanel" class="glass-card form-card hidden">
+        <p class="ocr-hint">Sube una foto o toma una captura del medidor. Luego recorta solo la zona con los dígitos.</p>
+
+        <div class="ocr-dropzone" id="ocrDropzone">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          <span>Arrastra una imagen aquí o elige una opción</span>
+          <div class="ocr-actions">
+            <label class="btn-secondary" for="inputFile">
+              <i class="fa-solid fa-image"></i> Subir imagen
+            </label>
+            <label class="btn-secondary" for="inputCamera">
+              <i class="fa-solid fa-camera"></i> Usar cámara
+            </label>
+          </div>
+          <input type="file" id="inputFile" accept="image/*" hidden>
+          <input type="file" id="inputCamera" accept="image/*" capture="environment" hidden>
+        </div>
+
+        <div id="ocrError" class="ocr-error hidden">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <span id="ocrErrorText">Ocurrió un error procesando la imagen.</span>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ============ HISTORIAL ============ -->
+    <section class="view" id="view-historial">
+      <div class="section-head">
+        <h2>Historial</h2>
+        <div class="history-tools">
+          <select id="filterType" class="mini-select">
+            <option value="todos">Todos</option>
+            <option value="luz">Luz</option>
+            <option value="agua">Agua</option>
+            <option value="gas">Gas</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+      </div>
+
+      <ul id="historyList" class="history-list"></ul>
+
+      <div id="historyEmpty" class="empty-state hidden">
+        <i class="fa-solid fa-inbox"></i>
+        <p>Todavía no hay lecturas guardadas.</p>
+        <span>Registra tu primera lectura desde la pestaña Registro.</span>
+      </div>
+    </section>
+
+    <!-- ============ ESTADÍSTICAS ============ -->
+    <section class="view" id="view-estadisticas">
+      <h2 class="section-title-solo">Estadísticas</h2>
+
+      <div class="stats-grid">
+        <div class="glass-card stat-card">
+          <span class="stat-label">Última lectura</span>
+          <strong class="stat-value" id="statLast">—</strong>
+          <span class="stat-sub" id="statLastMeta">Sin datos</span>
+        </div>
+        <div class="glass-card stat-card">
+          <span class="stat-label">Consumo prom. mensual</span>
+          <strong class="stat-value accent" id="statAvg">—</strong>
+          <span class="stat-sub" id="statAvgMeta">Sin datos</span>
+        </div>
+      </div>
+
+      <div class="glass-card chart-card">
+        <div class="chart-head">
+          <h3>Tendencia de consumo</h3>
+          <select id="chartType" class="mini-select">
+            <option value="luz">Luz</option>
+            <option value="agua">Agua</option>
+            <option value="gas">Gas</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="consumptionChart"></canvas>
+        </div>
+        <div id="chartEmpty" class="empty-state small hidden">
+          <i class="fa-solid fa-chart-line"></i>
+          <p>Sin suficientes datos para graficar este servicio.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-view="registro">
+      <i class="fa-solid fa-pen-to-square"></i>
+      <span>Registro</span>
+    </button>
+    <button class="nav-btn" data-view="historial">
+      <i class="fa-solid fa-clock-rotate-left"></i>
+      <span>Historial</span>
+    </button>
+    <button class="nav-btn" data-view="estadisticas">
+      <i class="fa-solid fa-chart-simple"></i>
+      <span>Estadísticas</span>
+    </button>
+  </nav>
+
+</div>
+
+<!-- ============ MODAL: CROP ============ -->
+<div class="modal-overlay hidden" id="cropModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3><i class="fa-solid fa-crop-simple"></i> Recorta los dígitos</h3>
+      <button class="icon-btn" id="closeCropModal"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="crop-stage">
+      <img id="cropImage" src="" alt="Imagen a recortar">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="cancelCrop">Cancelar</button>
+      <button class="btn-primary" id="confirmCrop">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> Extraer número
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: OCR PROCESSING ============ -->
+<div class="modal-overlay hidden" id="ocrModal">
+  <div class="modal-box modal-narrow">
+    <div class="ocr-spinner">
+      <div class="spinner-ring"></div>
+      <i class="fa-solid fa-magnifying-glass"></i>
+    </div>
+    <p id="ocrStatusText">Analizando imagen…</p>
+    <div class="progress-track"><div class="progress-fill" id="ocrProgressFill"></div></div>
+  </div>
+</div>
+
+<!-- ============ MODAL: OCR RESULT ============ -->
+<div class="modal-overlay hidden" id="ocrResultModal">
+  <div class="modal-box modal-narrow">
+    <div class="modal-head">
+      <h3><i class="fa-solid fa-check-circle"></i> Verifica el valor</h3>
+      <button class="icon-btn" id="closeResultModal"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <p class="ocr-hint">Confirma o corrige la cifra detectada antes de continuar.</p>
+    <div class="field">
+      <label for="ocrResultValue">Valor detectado</label>
+      <input type="number" id="ocrResultValue" step="0.01" inputmode="decimal">
+    </div>
+    <button class="btn-primary" id="useOcrValue">
+      <i class="fa-solid fa-arrow-right"></i> Usar este valor
+    </button>
+  </div>
+</div>
+
+<!-- ============ TOAST ============ -->
+<div class="toast hidden" id="toast"></div>
+
+<!-- CDN Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.3/chart.umd.min.js"></script>
+
+<script src="app.js"></script>
+</body>
+</html>
